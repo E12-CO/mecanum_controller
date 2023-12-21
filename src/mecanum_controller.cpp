@@ -3,6 +3,8 @@
 
 #include <chrono>
 #include <cmath>
+#include <string>
+#include <iostream>
 
 #include <stdio.h>
 #include <fcntl.h>
@@ -53,6 +55,7 @@ class mecanum_rbc : public rclcpp::Node{
 	
 	float x_vel,y_vel,az_vel = 0.0;
 	float robot_width, robot_length, robot_total_len = 0.0;// In unit of meter
+	float gear_ratio = 0.0;
 	float max_x_vel, max_y_vel, max_az_vel = 0.0;
 	float wheel_radius = 0.0;// In meter unit 
 	float invert_LF, invert_LB, invert_RF, invert_RB = 0.0;
@@ -65,7 +68,9 @@ class mecanum_rbc : public rclcpp::Node{
 	mecanum_rbc() : Node("MecanumControllerInterface"){
 		
 		RCLCPP_INFO(this->get_logger(), "Robot club KMITL : Starting mecanum controller...");
-		
+
+		declare_parameter("serial_port", "/dev/ttyUSB0");
+		get_parameter("serial_port", serial_port_);
 		declare_parameter("robot_frame_id", "base_link");
 		get_parameter("robot_frame_id", robot_frame_id);
 		declare_parameter("odom_frame_id", "odom");
@@ -76,6 +81,8 @@ class mecanum_rbc : public rclcpp::Node{
 		get_parameter("robot_length", robot_length);
 		declare_parameter("wheel_radius", 0.06); 
 		get_parameter("wheel_radius", wheel_radius);
+		declare_parameter("gear_ratio", 1.0);
+		get_parameter("gear_ratio", gear_ratio);
 		declare_parameter("maximum_x_velocity", max_x_vel);
 		get_parameter("maximum_x_velocity", max_x_vel);
 		declare_parameter("maximum_y_velocity", max_y_vel);
@@ -141,7 +148,7 @@ class mecanum_rbc : public rclcpp::Node{
 		pubRobotOdom = create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
 		
 		timer_ = this->create_wall_timer(
-			std::chrono::milliseconds(10),
+			std::chrono::milliseconds(20),
 			std::bind(&mecanum_rbc::feedback_tf, this)
 			);
 		
@@ -167,11 +174,11 @@ class mecanum_rbc : public rclcpp::Node{
 		invert_RF	= ((x_vel + y_vel + (robot_total_len*az_vel)) / wheel_radius) * 9.5493;
 		invert_RB	= ((x_vel - y_vel + (robot_total_len*az_vel)) / wheel_radius) * 9.5493;
 		
-		// Convert float to int +XX.XX or -XX.XX
-		invert_LF_int 	= round(invert_LF * 10000) / 100;
-		invert_LB_int 	= round(invert_LB * 10000) / 100;
-		invert_RF_int	= round(invert_RF * 10000) / 100;
-		invert_RB_int 	= round(invert_RB * 10000) / 100;
+		// Convert float to int
+		invert_LF_int 	= round(invert_LF);
+		invert_LB_int 	= round(invert_LB);
+		invert_RF_int	= round(invert_RF);
+		invert_RB_int 	= round(invert_RB);
 		
 		// Send to Serial
 		std::string send_packet;
@@ -195,7 +202,6 @@ class mecanum_rbc : public rclcpp::Node{
 	}
 	
 	char rx_buf[30];
-	
 	void feedback_tf(){
 		int rx_bytes = 0;
 		int idx = 0;
@@ -211,40 +217,51 @@ class mecanum_rbc : public rclcpp::Node{
 			
 			std::string lf, lb, rf, rb;
 			
+			idx+=2;// Offset away from magic word
 			while(rx_buf[idx] != ' '){
-				lf += std::to_string(rx_buf[idx++]);
+				lf += (rx_buf[idx++]);
 				if(idx > rx_bytes)
 					return;
 			}
+			lf += '\0';
 			idx++;
 			while(rx_buf[idx] != ' '){
-				lb += std::to_string(rx_buf[idx++]);
+				lb += (rx_buf[idx++]);
 				if(idx > rx_bytes)
 					return;
 			}
+			lb += '\0';
 			idx++;
 			while(rx_buf[idx] != ' '){
-				rf += std::to_string(rx_buf[idx++]);
+				rf += (rx_buf[idx++]);
 				if(idx > rx_bytes)
 					return;
 			}
+			rf += '\0';
 			idx++;
 			while(rx_buf[idx] != '\n'){
-				rb += std::to_string(rx_buf[idx++]);
+				rb += (rx_buf[idx++]);
 				if(idx > rx_bytes)
 					return;
 			}
+			rb += '\0';
 			
-			forward_LF 	= std::stof(lf) / 100.0;
-			forward_LB	= std::stof(lb) / 100.0;
-			forward_RF	= std::stof(rf) / 100.0;
-			forward_RB	= std::stof(rb) / 100.0;
+			forward_LF_int 	= std::stoi(lf);
+			forward_LB_int	= std::stoi(lb);
+			forward_RF_int	= std::stoi(rf);
+			forward_RB_int	= std::stoi(rb);
 			
 			// RPM to rad/s
-			forward_LF	= forward_LF / 9.5493;
-			forward_LB	= forward_LB / 9.5493;
-			forward_RF	= forward_RF / 9.5439;
-			forward_RB	= forward_RB / 9.5439;
+			forward_LF	= forward_LF_int / 9.5493;
+			forward_LB	= forward_LB_int / 9.5493;
+			forward_RF	= forward_RF_int / 9.5439;
+			forward_RB	= forward_RB_int / 9.5439;
+		
+			// divided with gear ratio
+			forward_LF = forward_LF / gear_ratio;
+			forward_LB = forward_LB / gear_ratio;
+			forward_RF = forward_RF / gear_ratio;
+			forward_RB = forward_RB / gear_ratio;
 		
 			//4. read back encoder velocity and do forward kinematic
 			x_vel	 	= (forward_LF + forward_LB + forward_RF + forward_RB) * (wheel_radius/4);
