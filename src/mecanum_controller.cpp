@@ -151,7 +151,8 @@ class mecanum_rbc : public rclcpp::Node{
 			std::chrono::milliseconds(20),
 			std::bind(&mecanum_rbc::feedback_tf, this)
 			);
-		
+	
+		tcflush(serial_port,TCIOFLUSH);// FLush buffer before start	
 		RCLCPP_INFO(this->get_logger(), "mecanum controller started!");
 		
 	}
