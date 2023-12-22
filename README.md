@@ -1,6 +1,7 @@
 # mecanum controller
 
-ROS2 mecanum controller node for ABU R0bocon 2024. Specifically designed for Linux Host.
+ROS2 mecanum controller node for ABU R0bocon 2024. Specifically designed for Linux Host.  
+In combination with [ESP32 low level code](https://github.com/E12-CO/ESP32_mecanum_closeloop) via USB serial.
 
 # Required internal dependencies
 
