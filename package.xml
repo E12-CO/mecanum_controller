@@ -3,7 +3,7 @@
 <package format="3">
   <name>mecanum_controller</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Mecanum Controller for ABU R0bocon 2024</description>
   <maintainer email="thipok17@gmail.com">tinlethax</maintainer>
   <license>GPL-3.0-only</license>
 
