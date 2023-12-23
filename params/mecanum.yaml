@@ -1,12 +1,12 @@
 MecanumControllerInterface:
   ros__parameters:
-    serial_port: "/dev/ttyACM0"
+    serial_port: "/dev/ttyUSB0"
     robot_frame_id: "base_link"
     odom_frame_id: "odom"
     robot_width: 0.3
     robot_length: 0.2
     wheel_radius: 0.06
-    gear_ratio: 48.0
+    gear_ratio: 120.0
     maximum_x_velocity: 1.0
     maximum_y_velocity: 1.0
     maximum_z_velocity: 1.0
