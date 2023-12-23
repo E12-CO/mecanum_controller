@@ -193,6 +193,8 @@ class mecanum_rbc : public rclcpp::Node{
 		send_packet += " ";
 		send_packet += std::to_string(invert_RB_int);
 		send_packet += "\n";
+
+//		RCLCPP_INFO(this->get_logger(),"Send packet be like : %s",send_packet.c_str());
 		
 		int char_size = send_packet.length();
 		
@@ -207,9 +209,11 @@ class mecanum_rbc : public rclcpp::Node{
 		int rx_bytes = 0;
 		int idx = 0;
 		ioctl(serial_port, FIONREAD, &rx_bytes);
+		
 		// Receive from Serial 
 		if(rx_bytes > 0){
 			read(serial_port, rx_buf,rx_bytes);
+//			 RCLCPP_INFO(this->get_logger(), " Received : %s", rx_buf);
 			// Detect Magic word "RB"
 			if(rx_buf[0] != 'R')
 				return;
@@ -247,10 +251,10 @@ class mecanum_rbc : public rclcpp::Node{
 			}
 			rb += '\0';
 			
-			forward_LF_int 	= std::stoi(lf);
-			forward_LB_int	= std::stoi(lb);
-			forward_RF_int	= std::stoi(rf);
-			forward_RB_int	= std::stoi(rb);
+			forward_LF_int 	= atoi(lf.c_str());
+			forward_LB_int	= atoi(lb.c_str());
+			forward_RF_int	= atoi(rf.c_str());
+			forward_RB_int	= atoi(rb.c_str());
 			
 			// RPM to rad/s
 			forward_LF	= forward_LF_int / 9.5493;
