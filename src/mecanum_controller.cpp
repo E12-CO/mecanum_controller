@@ -1,5 +1,5 @@
 // Mecanum controller and interface for ROS2 
-// Designed for ABU Robocon 2024 by TinLethax at Robot C
+// Designed for ABU Robocon 2024 by TinLethax at Robot Club KMITL 
 
 #include <chrono>
 #include <cmath>
@@ -29,6 +29,10 @@ struct termios tty;
 // Geometry lib
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/twist.hpp>
+
+// Define Feedback Loop time 
+#define LOOP_TIME_MIL   20 // 20 millisec
+#define LOOP_TIME_SEC	LOOP_TIME_MIL/1000 // Loop time in second
 
 int serial_port = 0;
 
@@ -148,7 +152,7 @@ class mecanum_rbc : public rclcpp::Node{
 		pubRobotOdom = create_publisher<nav_msgs::msg::Odometry>("/odom", 10);
 		
 		timer_ = this->create_wall_timer(
-			std::chrono::milliseconds(20),
+			std::chrono::milliseconds(LOOP_TIME_MIL),
 			std::bind(&mecanum_rbc::feedback_tf, this)
 			);
 	
@@ -275,9 +279,9 @@ class mecanum_rbc : public rclcpp::Node{
 
 			//5. calculate position with integration of x_vel y_vel and az_vel
 			
-			cur_az_ang 	+= az_vel * 0.023; 
-			cur_x_pos 	+= ((x_vel * cos(cur_az_ang)) - (y_vel * sin(cur_az_ang))) * 0.023;
-			cur_y_pos 	+= ((x_vel * sin(cur_az_ang)) + (y_vel * cos(cur_az_ang))) * 0.023;
+			cur_az_ang 	+= az_vel * LOOP_TIME_SEC; 
+			cur_x_pos 	+= ((x_vel * cos(cur_az_ang)) - (y_vel * sin(cur_az_ang))) * LOOP_TIME_SEC;
+			cur_y_pos 	+= ((x_vel * sin(cur_az_ang)) + (y_vel * cos(cur_az_ang))) * LOOP_TIME_SEC;
 			
 			nav_msgs::msg::Odometry robotOdom;
 			br = std::make_unique<tf2_ros::TransformBroadcaster>(this);
