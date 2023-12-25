@@ -6,7 +6,8 @@ MecanumControllerInterface:
     robot_width: 0.3
     robot_length: 0.2
     wheel_radius: 0.06
-    gear_ratio: 25.0
+    gear_ratio: 73.00
     maximum_x_velocity: 1.0
     maximum_y_velocity: 1.0
     maximum_z_velocity: 1.0
+    publish_tf: false

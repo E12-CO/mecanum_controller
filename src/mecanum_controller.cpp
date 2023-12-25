@@ -67,7 +67,9 @@ class mecanum_rbc : public rclcpp::Node{
 	int forward_LF_int, forward_LB_int, forward_RF_int, forward_RB_int = 0;
 	float forward_LF, forward_LB, forward_RF, forward_RB = 0.0;
 	float cur_x_pos, cur_y_pos, cur_az_ang = 0.0;
-	
+
+	bool pub_tf;
+		
 	// initalize ROS2 node
 	mecanum_rbc() : Node("MecanumControllerInterface"){
 		
@@ -93,7 +95,8 @@ class mecanum_rbc : public rclcpp::Node{
 		get_parameter("maximum_y_velocity", max_y_vel);
 		declare_parameter("maximum_az_velocity", max_az_vel);
 		get_parameter("maximum_az_velocity", max_az_vel);
-		
+		declare_parameter("publish_tf", true);
+		get_parameter("publish_tf", pub_tf);		
 		robot_total_len = robot_width + robot_length;
 		
 		slen = serial_port_.length();
@@ -304,7 +307,8 @@ class mecanum_rbc : public rclcpp::Node{
 			robotOdom.pose.pose.position.x 		= cur_x_pos;
 			robotOdom.pose.pose.position.y 		= cur_y_pos;
 			pubRobotOdom->publish(robotOdom);
-			
+
+			if(pub_tf){
 			// Do the Odom transform
 			transform.header.stamp 				= robotOdom.header.stamp;
 			transform.header.frame_id 			= odom_frame_id;
@@ -316,7 +320,7 @@ class mecanum_rbc : public rclcpp::Node{
 			transform.transform.rotation.z 		= round(xyz_angular.getZ() * 100) / 100;
 			transform.transform.rotation.w 		= round(xyz_angular.getW() * 100) / 100;
 			br->sendTransform(transform);
-				
+			}
 		}
 	}
 	
