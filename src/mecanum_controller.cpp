@@ -183,10 +183,10 @@ class mecanum_rbc : public rclcpp::Node{
 		invert_RB	= ((x_vel - y_vel + (robot_total_len*az_vel)) / wheel_radius) * 9.5493;
 		
 		// Convert float to int
-		invert_LF_int 	= round(invert_LF);
-		invert_LB_int 	= round(invert_LB);
-		invert_RF_int	= round(invert_RF);
-		invert_RB_int 	= round(invert_RB);
+		invert_LF_int 	= round(invert_LF * gear_ratio);
+		invert_LB_int 	= round(invert_LB * gear_ratio);
+		invert_RF_int	= round(invert_RF * gear_ratio);
+		invert_RB_int 	= round(invert_RB * gear_ratio);
 		
 		// Send to Serial
 		std::string send_packet;
